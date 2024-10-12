@@ -1,18 +1,22 @@
 from flask import Flask, jsonify, request
 from sqlalchemy import update
 from sqlalchemyDB.db_class import db, Quote
-
+from flask_migrate import Migrate
+from router import app_route
 
 
 app = Flask(__name__)
+app.register_blueprint(app_route)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///store.db"
 db.init_app(app)
+migrate = Migrate(app, db)
 
     
 @app.route("/getquotes/", methods=['GET'])
 def get_quotes():
     get_quotes = db.session.execute(db.select(Quote.id, Quote.author, Quote.text)).fetchall()
     return [{"id": quote[0], "author": quote[1], "text": quote[2]} for quote in get_quotes]
+
 
 @app.route("/quote/<int:id>", methods=["GET"])
 def get_quote(id):
@@ -38,7 +42,6 @@ def update_quote(id):
     db.session.commit()
     return jsonify(status = 200)
     
-
 
 @app.route("/deletequote/<int:id>", methods=['DELETE'])
 def delete_quote(id):
